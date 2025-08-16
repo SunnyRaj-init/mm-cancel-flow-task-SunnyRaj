@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-
+import { useRouter } from 'next/navigation';
 // Mock user data for UI display
 const mockUser = {
   email: 'user@example.com',
@@ -24,7 +24,7 @@ const mockSubscriptionData = {
 export default function ProfilePage() {
   const [loading] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  
+  const router = useRouter()
   // New state for settings toggle
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
@@ -249,7 +249,7 @@ export default function ProfilePage() {
                     </button>
                     <button
                       onClick={() => {
-                        console.log('Cancel button clicked - no action');
+                        router.push('/subscription-cancellation')
                       }}
                       className="inline-flex items-center justify-center w-full px-4 py-3 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-all duration-200 shadow-sm group"
                     >
