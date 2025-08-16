@@ -109,7 +109,7 @@ export default function DownserveOffer() {
                 type="button"
                 className="mt-4 w-full inline-flex items-center justify-center rounded-lg px-5 py-3 text-base font-medium
                            bg-green-500 hover:bg-green-600 text-white transition-colors"
-                           onClick={()=>{router.push(routes.OfferAcceptedAlt)}}
+                           onClick={()=>{router.push(routes.offerAcceptedAlt)}}
               >
                 Get 50% off
               </button>
@@ -132,6 +132,7 @@ export default function DownserveOffer() {
                 type="button"
                 className="w-full inline-flex items-center justify-center rounded-lg px-5 py-3 text-base font-medium
                            bg-white-100 text-neutral-700 border border-neutral-300"
+                           onClick={()=>{router.push(routes.offerDeclined)}}
               >
                 No thanks
               </button>
