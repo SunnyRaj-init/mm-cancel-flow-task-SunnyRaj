@@ -54,7 +54,7 @@ export default function HelpWithVisa() {
         </div>
 
         {/* Content */}
-        <div className="grid md:grid-cols-2 gap-0">
+        <div className="grid md:grid-cols-2 gap-0 md:gap-8">
           {/* Left column */}
           <section className="px-4 md:px-6 md:pr-8 py-6 md:py-8 flex flex-col">
             <h1 className="text-[26px] leading-8 md:text-4xl md:leading-tight font-semibold text-neutral-900 mb-5">

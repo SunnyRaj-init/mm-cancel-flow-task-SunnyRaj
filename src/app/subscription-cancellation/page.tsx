@@ -77,6 +77,7 @@ export default function Page() {
                 <button
                   type="button"
                   className="w-full h-12 md:h-[52px] rounded-xl border border-gray-200 bg-white text-gray-800 text-[15px] font-medium hover:bg-gray-50 transition-colors"
+                onClick={() => router.push(routes.downServe)}
                 >
                   Not yet – I’m still looking
                 </button>
