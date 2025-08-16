@@ -4,7 +4,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import routes from "@/api/routes";
+import routes from "@/app/api/routes";
 
 type Option = string;
 type QKey =

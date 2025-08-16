@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import routes from "@/api/routes";
+import routes from "@/app/api/routes";
 
 export default function HelpWithVisa() {
   const router = useRouter();

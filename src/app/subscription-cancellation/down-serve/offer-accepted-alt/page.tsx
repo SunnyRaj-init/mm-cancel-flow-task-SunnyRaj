@@ -1,7 +1,7 @@
 // app/subscription-accepted/page.tsx
 "use client";
 
-import routes from "@/api/routes";
+import routes from "@/app/api/routes";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 

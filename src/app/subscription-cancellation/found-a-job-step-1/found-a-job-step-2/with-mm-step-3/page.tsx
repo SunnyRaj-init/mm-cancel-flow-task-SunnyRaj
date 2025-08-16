@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import routes from "@/api/routes";
+import routes from "@/app/api/routes";
 type Lawyer = "yes" | "no" | null;
 import { useMemo } from "react";
 
