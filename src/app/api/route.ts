@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   try {
     const cookies = req.headers.get("cookie") || "";
     // extract the cookie named user_id_enc

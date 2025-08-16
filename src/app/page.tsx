@@ -39,7 +39,7 @@ export default function ProfilePage() {
       Cookies.set("user_id", mockUser.id, { path: "/", expires: 1 });
 
       // Fetch subscription
-      const res = await fetch(apiRoutes.home, { method: "POST" });
+      const res = await fetch(apiRoutes.home, { method: "GET" });
       const { subscription } = await res.json();
 
       // Update local state (so the UI reflects real subscription status)
