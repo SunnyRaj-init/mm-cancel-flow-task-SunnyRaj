@@ -6,6 +6,8 @@ const apiRoutes = {
   resetToStep1: "/api/subscription-cancellation/reset-to-step-1",
   cancelComplete:'/api/subscription-cancellation/complete',
   saveVariant:'/api/subscription-cancellation/save-variant',
+  OfferAccepted:'/api/subscription-cancellation/down-serve/offer-accepted',
+  keepSubscription:'/api/keep-subscription',
 };
 
 export default apiRoutes;

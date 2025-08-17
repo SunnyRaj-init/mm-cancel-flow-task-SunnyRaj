@@ -4,7 +4,7 @@ import routes from "@/app/api/routes";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function CancelCompleted() {
   const router = useRouter();
@@ -47,23 +47,6 @@ export default function CancelCompleted() {
       <div className="mx-auto w-full md:max-w-5xl bg-white md:rounded-3xl md:shadow-xl md:border md:border-neutral-200">
         {/* Top bar */}
         <div className="relative flex items-center justify-center py-3 md:py-4 border-b border-neutral-200/70 rounded-t-3xl">
-          {/* Back */}
-          <button
-            type="button"
-            onClick={() => window.history.back()}
-            className="absolute left-3 top-3 md:left-4 md:top-4 flex items-center gap-1 text-neutral-700 hover:text-neutral-900"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth={2}
-              strokeLinecap="round" strokeLinejoin="round"
-              className="w-5 h-5"
-            >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-            <span className="text-sm md:text-base font-medium">Back</span>
-          </button>
-
           <div className="flex items-center gap-4">
             <h2 className="text-sm md:text-base font-medium text-neutral-800">
               Subscription Cancelled
@@ -101,8 +84,14 @@ export default function CancelCompleted() {
                        text-neutral-500 hover:text-neutral-700 transition-colors"
           >
             <svg
-              width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               className="opacity-80 group-hover:opacity-100 transition-opacity"
             >
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -135,12 +124,13 @@ export default function CancelCompleted() {
             </p>
 
             <p className="mt-4 text-sm md:text-base text-neutral-700">
-              Your subscription is set to end on XX date. You’ll still have full access
-              until then. No further charges after that.
+              Your subscription is set to end on XX date. You’ll still have full
+              access until then. No further charges after that.
             </p>
 
             <p className="mt-3 text-xs md:text-sm text-neutral-500">
-              Changed your mind? You can reactivate anytime before your end date.
+              Changed your mind? You can reactivate anytime before your end
+              date.
             </p>
 
             {/* Divider (desktop like frame) */}
@@ -153,7 +143,9 @@ export default function CancelCompleted() {
                 before:content-[''] before:absolute before:left-0 before:right-0 before:-top-px before:h-px before:bg-neutral-200
                 md:static md:mx-0 md:px-0 md:py-0 md:before:hidden
               "
-              style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
+              style={{
+                paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))",
+              }}
             >
               <button
                 type="button"

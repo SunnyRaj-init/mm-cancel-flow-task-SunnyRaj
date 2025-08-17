@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   monthly_price INTEGER NOT NULL, -- Price in USD cents
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'pending_cancellation', 'cancelled')),
+  next_due_date TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '30 days'),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

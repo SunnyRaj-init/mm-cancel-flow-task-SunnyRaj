@@ -4,9 +4,37 @@
 import routes from "@/app/api/routes";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import apiRoutes from "@/app/api/apiRoutes";
+import { useEffect, useState } from "react";
 
 export default function SubscriptionAccepted() {
   const router = useRouter();
+  const [price, setPrice] = useState(Number);
+  const [dueDate, setDueDate] = useState(String);
+  const [daysLeft, setDaysLeft] = useState(Number);
+  useEffect(() => {
+    const init = async () => {
+      const res = await fetch(apiRoutes.home, { method: "GET" });
+      const { subscription } = await res.json();
+
+      if (subscription.monthly_price) {
+        setPrice(parseInt(subscription.monthly_price) / 100);
+      }
+
+      if (subscription.next_due_date) {
+        const iso = new Date(subscription.next_due_date).toISOString();
+        setDueDate(iso);
+
+        const days = Math.ceil(
+          (new Date(iso).getTime() - new Date().getTime()) /
+            (1000 * 60 * 60 * 24)
+        );
+        setDaysLeft(days);
+      }
+    };
+
+    init();
+  }, []);
 
   return (
     <main className="min-h-screen bg-black/40 md:flex md:items-center md:justify-center">
@@ -73,8 +101,13 @@ export default function SubscriptionAccepted() {
             </p>
 
             <p className="text-sm md:text-base text-neutral-700 mt-4">
-              You’ve got XX days left on your current plan. Starting from XX
-              date, your monthly payment will be $12.50.
+              You’ve got {daysLeft} days left on your current plan. Starting
+              from{" "}
+              {new Date(dueDate).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+              })}
+              , your monthly payment will be ${price}.
             </p>
 
             <p className="text-xs md:text-sm text-neutral-500 italic mt-3">

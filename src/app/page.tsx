@@ -94,6 +94,7 @@ export default function ProfilePage() {
         ...prev,
         status: subscription.status,
         monthlyPrice: parseInt(subscription.monthly_price) / 10,
+        currentPeriodEnd:new Date(subscription.next_due_date).toISOString()
       }));
     };
 

@@ -5,10 +5,11 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
+import apiRoutes from "@/app/api/apiRoutes";
 
 export default function DownserveOffer() {
   const router = useRouter();
-  const [price, setPrice] = useState(25);
+  const [price, setPrice] = useState(Number);
   useEffect(() => {
     const init = async () => {
       // check for cookies if not present just re route to home
@@ -19,7 +20,7 @@ export default function DownserveOffer() {
       }
 
       // check for cookies if not present just re route to home
-      const sub=Cookies.get("subscription")
+      const sub = Cookies.get("subscription");
       if (!sub) {
         alert("Oops something has changed");
         router.push(routes.home);
@@ -39,9 +40,9 @@ export default function DownserveOffer() {
         router.push(routes.offerDeclined);
         return;
       }
-      const subData=JSON.parse(sub)
-      if(subData.monthly_price){
-        setPrice(parseInt(subData.monthly_price)/100)
+      const subData = JSON.parse(sub);
+      if (subData.monthly_price) {
+        setPrice(parseInt(subData.monthly_price) / 100);
       }
     };
 
@@ -136,7 +137,7 @@ export default function DownserveOffer() {
 
               <div className="flex items-baseline gap-4 mt-3">
                 <span className="text-violet-600 font-semibold text-xl">
-                  ${price-10}
+                  ${price - 10}
                 </span>
                 <span className="text-violet-600">/month</span>
                 <span className="text-neutral-400 line-through ml-2">
@@ -148,8 +149,18 @@ export default function DownserveOffer() {
                 type="button"
                 className="mt-4 w-full inline-flex items-center justify-center rounded-lg px-5 py-3 text-base font-medium
                            bg-green-500 hover:bg-green-600 text-white transition-colors"
-                onClick={() => {
-                  router.push(routes.offerAcceptedAlt);
+                onClick={async () => {
+                  const res = await fetch(
+                    apiRoutes.OfferAccepted,
+                    { method: "POST" }
+                  );
+                  const { success } = await res.json();
+                  if (success) {
+                    router.push(routes.offerAcceptedAlt);
+                  } else {
+                    alert("Could not apply discount. Please try again later.");
+                    router.push(routes.home);
+                  }
                 }}
               >
                 Get 10$ off

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import routes from "@/app/api/routes";
 import Cookies from "js-cookie";
+import apiRoutes from "@/app/api/apiRoutes";
 
 type Reason =
   | "too-expensive"
@@ -381,6 +382,20 @@ export default function MainReason() {
                   type="button"
                   className="w-full inline-flex items-center justify-center h-12 rounded-xl
                            bg-green-500 hover:bg-green-600 text-white font-medium"
+                  onClick={async () => {
+                    const res = await fetch(apiRoutes.OfferAccepted, {
+                      method: "POST",
+                    });
+                    const { success } = await res.json();
+                    if (success) {
+                      router.push(routes.offerAcceptedAlt);
+                    } else {
+                      alert(
+                        "Could not apply discount. Please try again later."
+                      );
+                      router.push(routes.home);
+                    }
+                  }}
                 >
                   Get 10$ off
                 </button>
@@ -389,7 +404,20 @@ export default function MainReason() {
                 <button
                   type="button"
                   className="w-full inline-flex items-center justify-center h-12 rounded-xl
-                           bg-black hover:bg-neural-600 text-white font-medium"
+             bg-black text-white font-medium"
+                  onClick={async () => {
+                    const res = await fetch(apiRoutes.keepSubscription, {
+                      method: "POST",
+                    });
+                    const { success } = await res.json();
+
+                    if (success) {
+                      router.push(routes.home);
+                    } else {
+                      alert("Something went wrong. Please try again.");
+                      router.push(routes.home);
+                    }
+                  }}
                 >
                   Keep Subscription
                 </button>
