@@ -32,10 +32,25 @@ CREATE TABLE IF NOT EXISTS cancellations (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Table to handle yes I found a job sequence from i.e. "Found a Job – Step 1" screen
+CREATE TABLE IF NOT EXISTS cancellation_job_feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  found_with_mm TEXT NOT NULL CHECK(found_with_mm IN ('Yes','No')),
+  roles_applied TEXT NOT NULL CHECK(roles_applied IN ('0','1-5','6-20','20+')),
+  companies_emailed TEXT NOT NULL CHECK(companies_emailed IN ('0','1-5','6-20','20+')),
+  companies_interviewed TEXT NOT NULL CHECK(companies_interviewed IN ('0','1-2','3-5','5+')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  feedback TEXT DEFAULT NULL,
+  help_with_lawyer TEXT DEFAULT NULL CHECK(help_with_lawyer IN ('Yes','No')),
+  visa_type TEXT  DEFAULT NULL
+);
+
 -- Enable Row Level Security
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cancellations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cancellation_job_feedback ENABLE ROW LEVEL SECURITY;
 
 -- Basic RLS policies (candidates should enhance these)
 CREATE POLICY "Users can view own data" ON users
@@ -52,6 +67,17 @@ CREATE POLICY "Users can insert own cancellations" ON cancellations
 
 CREATE POLICY "Users can view own cancellations" ON cancellations
   FOR SELECT USING (auth.uid() = user_id);
+
+-- Policies for authenticated users (optional, still useful for reads)
+CREATE POLICY "Users can view their feedback"
+  ON cancellation_job_feedback
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Allow server-side inserts using the service role key
+CREATE POLICY "Service role can insert feedback"
+  ON cancellation_job_feedback
+  FOR INSERT TO service_role
+  WITH CHECK (true);
 
 -- Seed data
 INSERT INTO users (id, email) VALUES
