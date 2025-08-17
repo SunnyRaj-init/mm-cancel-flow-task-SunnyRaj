@@ -118,7 +118,25 @@ export default function HelpWithVisa() {
             >
               <button
                 type="button"
-                onClick={() => router.push("/")}
+                onClick={async () => {
+                  const res = await fetch(
+                    "/api/subscription-cancellation/complete",
+                    {
+                      method: "POST",
+                    }
+                  );
+                  const { success } = await res.json();
+                  if (success) {
+                    router.push(routes.home);
+                    return;
+                  } else {
+                    alert(
+                      "Unable to process your request. Please try again later."
+                    );
+                    router.push(routes.home);
+                    return;
+                  }
+                }}
                 className="w-full inline-flex items-center justify-center rounded-lg px-5 py-3 text-base font-medium
                            bg-violet-500 hover:bg-violet-600 text-white transition-colors"
               >

@@ -1,13 +1,74 @@
 // app/found-a-job-step-2/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import routes from "@/app/api/routes";
+import Cookies from "js-cookie";
+import apiRoutes from "@/app/api/apiRoutes";
 
 export default function FoundAJobStep2Page() {
   const router = useRouter();
+  useEffect(() => {
+    const cookie = Cookies.get("job_feedback_step1");
+    if (!cookie) return;
+
+    try {
+      const parsed = JSON.parse(cookie);
+      if (parsed.feedback) {
+        setFeedback(parsed.feedback);
+      }
+    } catch {
+      // silently ignore invalid cookie
+    }
+  }, []);
+
+  useEffect(() => {
+    const checkAndReset = async () => {
+      const cookie = Cookies.get("job_feedback_step1");
+
+      if (!cookie) {
+        await fetch(apiRoutes.resetToStep1, {
+          method: "POST",
+        });
+        router.push(routes.home);
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(cookie);
+
+        // required fields from Step-1
+        const requiredKeys = [
+          "foundWithMM",
+          "rolesApplied",
+          "companiesEmailed",
+          "companiesInterviewed",
+        ];
+
+        const hasAllStep1Fields = requiredKeys.every((k) => parsed[k]);
+
+        if (!hasAllStep1Fields) {
+          Cookies.remove("job_feedback_step1");
+          await fetch(apiRoutes.resetToStep1, {
+            method: "POST",
+          });
+          router.push(routes.home);
+          return;
+        }
+      } catch {
+        Cookies.remove("job_feedback_step1");
+        await fetch(apiRoutes.resetToStep1, {
+          method: "POST",
+        });
+        router.push(routes.home);
+      }
+    };
+
+    checkAndReset();
+  }, []);
+
   const [feedback, setFeedback] = useState("");
   const minLen = 25;
   const atLeastMin = feedback.trim().length >= minLen;
@@ -26,7 +87,7 @@ export default function FoundAJobStep2Page() {
           {/* Back button (no extra packages) */}
           <button
             type="button"
-            onClick={() => window.history.back()}
+            onClick={() => router.push(routes.foundJobStep1)}
             className="flex items-center gap-1 text-neutral-700 hover:text-neutral-900"
           >
             <svg
@@ -140,7 +201,89 @@ export default function FoundAJobStep2Page() {
                       ? "bg-neutral-900 text-white hover:bg-black"
                       : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
                   }`}
-                onClick={() => {router.push(routes.withMMStep3)}}
+                onClick={async () => {
+                  const cookieValue = Cookies.get("job_feedback_step1");
+                  const prev = cookieValue ? JSON.parse(cookieValue) : {};
+
+                  // optimistic update: set feedback
+                  const updated = { ...prev, feedback: feedback.trim() };
+                  Cookies.set("job_feedback_step1", JSON.stringify(updated), {
+                    path: "/",
+                    expires: 1,
+                  });
+                  const hasInvalid =
+                    !updated.foundWithMM ||
+                    !updated.rolesApplied ||
+                    !updated.companiesEmailed ||
+                    !updated.companiesInterviewed ||
+                    !updated.feedback;
+                  if (hasInvalid) {
+                    // hit reset route if updated values are missing
+                    Cookies.remove("job_feedback_step1");
+                    await fetch("/api/subscription-cancellation/reset-step-1", {
+                      method: "POST",
+                    });
+                    alert(
+                      "Unable to process your request. Please try again later."
+                    );
+                    router.push(routes.home);
+                    return;
+                  }
+                  const res = await fetch(apiRoutes.foundAJobStep2, {
+                    method: "POST",
+                  });
+
+                  const { success } = await res.json();
+
+                  if (success) {
+                    if (updated.foundWithMM === "Yes") {
+                      router.push(routes.withMMStep3);
+                      return;
+                    } else if (updated.foundWithMM === "No") {
+                      router.push(routes.withoutMMStep3);
+                      return;
+                    } else {
+                      // invalid data present
+                      Cookies.remove("job_feedback_step1");
+                      await fetch(apiRoutes.resetToStep1, {
+                        method: "POST",
+                      });
+                      router.push(routes.home);
+                      return;
+                    }
+                  } else {
+                    // error → revert the cookie to its previous value
+                    // check if all teh prev values are valid
+                    const hasInvalidPrev =
+                      !prev.foundWithMM ||
+                      !prev.rolesApplied ||
+                      !prev.companiesEmailed ||
+                      !prev.companiesInterviewed;
+                    if (hasInvalidPrev) {
+                      // hit reset route if previous values are missing
+                      Cookies.remove("job_feedback_step1");
+                      await fetch(
+                        "/api/subscription-cancellation/reset-step-1",
+                        { method: "POST" }
+                      );
+                      alert(
+                        "Unable to process your request. Please try again later."
+                      );
+                      router.push(routes.home);
+                      return;
+                    }
+                    Cookies.set("job_feedback_step1", JSON.stringify(prev), {
+                      path: "/",
+                      expires: 1,
+                    });
+
+                    alert(
+                      "Unable to process your request. Please try again later."
+                    );
+                    router.push(routes.home);
+                    return;
+                  }
+                }}
               >
                 Continue
               </button>

@@ -9,10 +9,6 @@ export async function GET(req: Request) {
     if (!match) {
       return NextResponse.json({ error: "Missing user id" }, { status: 400 });
     }
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    console.log(session,"hehe")
     const userId = match[1];
     // Query subscriptions from Supabase
 

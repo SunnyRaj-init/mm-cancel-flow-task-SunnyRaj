@@ -72,8 +72,8 @@ export default function SubscriptionCancelled() {
             </h1>
 
             <p className="text-sm md:text-lg text-neutral-700">
-              We’re stoked to hear you’ve landed a job and sorted your visa.
-              Big congrats from the team. 🙌
+              We’re stoked to hear you’ve landed a job and sorted your visa. Big
+              congrats from the team. 🙌
             </p>
 
             {/* Footer — sticky on mobile, static on md+ */}
@@ -91,7 +91,25 @@ export default function SubscriptionCancelled() {
                 type="button"
                 className="w-full inline-flex items-center justify-center rounded-lg px-5 py-3 text-base font-medium
                            bg-violet-500 hover:bg-violet-600 text-white transition-colors"
-                onClick={() => router.push(routes.home)}
+                onClick={async () => {
+                  const res = await fetch(
+                    "/api/subscription-cancellation/complete",
+                    {
+                      method: "POST",
+                    }
+                  );
+                  const { success } = await res.json();
+                  if (success) {
+                    router.push(routes.home);
+                    return;
+                  } else {
+                    alert(
+                      "Unable to process your request. Please try again later."
+                    );
+                    router.push(routes.home);
+                    return;
+                  }
+                }}
               >
                 Finish
               </button>

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-import apiRoutes from "./api/apiRoutes";
+import apiRoutes from "@/app/api/apiRoutes";
+import routes from "./api/routes";
 // Mock user data for UI display
 const mockUser = {
   email: "user1@example.com",
@@ -223,41 +224,41 @@ export default function ProfilePage() {
 
                 {(subscriptionData.status === "active" ||
                   subscriptionData.status === "pending_cancellation") &&
-                    !mockSubscriptionData.isTrialSubscription &&
-                    !mockSubscriptionData.cancelAtPeriodEnd && (
-                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className="flex-shrink-0">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5 text-gray-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                          <p className="text-sm font-medium text-gray-900">
-                            Next payment
-                          </p>
+                  !mockSubscriptionData.isTrialSubscription &&
+                  !mockSubscriptionData.cancelAtPeriodEnd && (
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
                         </div>
                         <p className="text-sm font-medium text-gray-900">
-                          {mockSubscriptionData.currentPeriodEnd &&
-                            new Date(
-                              mockSubscriptionData.currentPeriodEnd
-                            ).toLocaleDateString("en-US", {
-                              month: "long",
-                              day: "numeric",
-                            })}
+                          Next payment
                         </p>
                       </div>
-                    )}
+                      <p className="text-sm font-medium text-gray-900">
+                        {mockSubscriptionData.currentPeriodEnd &&
+                          new Date(
+                            mockSubscriptionData.currentPeriodEnd
+                          ).toLocaleDateString("en-US", {
+                            month: "long",
+                            day: "numeric",
+                          })}
+                      </p>
+                    </div>
+                  )}
               </div>
             </div>
           </div>
@@ -398,8 +399,90 @@ export default function ProfilePage() {
                         </span>
                       </button>
                       <button
-                        onClick={() => {
-                          router.push("/subscription-cancellation");
+                        onClick={async () => {
+                          const cookie = Cookies.get("job_feedback_step1");
+
+                          // 1) No cookie at all → start flow from Step-1
+                          if (!cookie) {
+                            router.push(routes.cancelSub); // `/subscription-cancellation` (step 1)
+                            return;
+                          }
+
+                          try {
+                            const parsed = JSON.parse(cookie);
+
+                            // 2) Validate step-1 values
+                            const validFound = ["Yes", "No"].includes(
+                              parsed.foundWithMM
+                            );
+                            const validRoles = [
+                              "0",
+                              "1-5",
+                              "6-20",
+                              "20+",
+                            ].includes(parsed.rolesApplied);
+                            const validEmailed = [
+                              "0",
+                              "1-5",
+                              "6-20",
+                              "20+",
+                            ].includes(parsed.companiesEmailed);
+                            const validInterviewed = [
+                              "0",
+                              "1-2",
+                              "3-5",
+                              "5+",
+                            ].includes(parsed.companiesInterviewed);
+
+                            if (
+                              !(
+                                validFound &&
+                                validRoles &&
+                                validEmailed &&
+                                validInterviewed
+                              )
+                            ) {
+                              // invalid values → cleanup + start at step 1
+                              Cookies.remove("job_feedback_step1");
+                              router.push(routes.cancelSub);
+                              return;
+                            }
+
+                            // 3) If feedback is missing → go to step 2
+                            if (!parsed.feedback) {
+                              router.push(routes.foundJobStep2);
+                              return;
+                            }
+
+                            // 4) Check if step-3 values exist and are valid
+                            const hasLawyer =
+                              parsed.help_with_lawyer === "Yes" ||
+                              parsed.help_with_lawyer === "No";
+                            const hasVisaType =
+                              typeof parsed.visa_type === "string" &&
+                              parsed.visa_type.trim().length > 0;
+
+                            // If either `help_with_lawyer` or `visa_type` is missing → go to step-3
+                            if (!(hasLawyer && hasVisaType)) {
+                              if (parsed.foundWithMM === "Yes") {
+                                router.push(routes.withMMStep3);
+                              } else {
+                                router.push(routes.withoutMMStep3);
+                              }
+                              return;
+                            }
+
+                            // 5) All fields are valid/completed → go to final page
+                            if (parsed.help_with_lawyer === "Yes") {
+                              router.push(routes.noVisaHelp);
+                            } else {
+                              router.push(routes.visaHelp);
+                            }
+                          } catch {
+                            // invalid JSON → cleanup + restart
+                            Cookies.remove("job_feedback_step1");
+                            router.push(routes.cancelSub);
+                          }
                         }}
                         className="inline-flex items-center justify-center w-full px-4 py-3 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-all duration-200 shadow-sm group"
                       >

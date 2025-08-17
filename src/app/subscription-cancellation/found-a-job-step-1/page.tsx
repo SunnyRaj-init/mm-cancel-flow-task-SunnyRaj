@@ -1,10 +1,12 @@
 // app/found-a-job-step-1/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import routes from "@/app/api/routes";
+import Cookies from "js-cookie";
+import apiRoutes from "@/app/api/apiRoutes";
 
 type Option = string;
 type QKey =
@@ -15,6 +17,26 @@ type QKey =
 
 export default function FoundAJobStep1Page() {
   const router = useRouter();
+  useEffect(() => {
+  const cookie = Cookies.get("job_feedback_step1");
+  if (!cookie) return;
+
+  try {
+    const parsed = JSON.parse(cookie);
+
+    // Only set if the values exist
+    setAnswers((prev) => ({
+      ...prev,
+      foundWithMM: parsed.foundWithMM ?? prev.foundWithMM,
+      rolesApplied: parsed.rolesApplied ?? prev.rolesApplied,
+      companiesEmailed: parsed.companiesEmailed ?? prev.companiesEmailed,
+      companiesInterviewed: parsed.companiesInterviewed ?? prev.companiesInterviewed,
+    }));
+  } catch {
+    // ignore if cookie is invalid JSON
+  }
+}, []);
+
   const [answers, setAnswers] = useState<Record<QKey, Option | null>>({
     foundWithMM: null,
     rolesApplied: null,
@@ -36,7 +58,7 @@ export default function FoundAJobStep1Page() {
           <button
             type="button"
             className="flex items-center gap-1 text-neutral-700 hover:text-neutral-900"
-            onClick={() => window.history.back()}
+            onClick={() => router.push(routes.cancelSub)}
           >
             {/* Inline chevron icon */}
             <svg
@@ -118,7 +140,7 @@ export default function FoundAJobStep1Page() {
                     Mate?*
                   </>
                 }
-                options={["0", "1 – 5", "6 – 20", "20+"]}
+                options={["0", "1-5", "6-20", "20+"]}
                 value={answers.rolesApplied}
                 onChange={(v) => setAnswer("rolesApplied", v)}
               />
@@ -129,7 +151,7 @@ export default function FoundAJobStep1Page() {
                     How many companies did you <u>email</u> directly?*
                   </>
                 }
-                options={["0", "1–5", "6–20", "20+"]}
+                options={["0", "1-5", "6-20", "20+"]}
                 value={answers.companiesEmailed}
                 onChange={(v) => setAnswer("companiesEmailed", v)}
               />
@@ -140,7 +162,7 @@ export default function FoundAJobStep1Page() {
                     How many different companies did you <u>interview</u> with?*
                   </>
                 }
-                options={["0", "1–2", "3–5", "5+"]}
+                options={["0", "1-2", "3-5", "5+"]}
                 value={answers.companiesInterviewed}
                 onChange={(v) => setAnswer("companiesInterviewed", v)}
               />
@@ -157,8 +179,25 @@ export default function FoundAJobStep1Page() {
           ? "bg-neutral-900 text-white hover:bg-black"
           : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
       }`}
-                onClick={() => {
-                  router.push(routes.foundJobStep2);
+                onClick={async () => {
+                  Cookies.set("job_feedback_step1", JSON.stringify(answers), {
+                    path: "/",
+                    expires: 1,
+                  });
+
+                  const res = await fetch(apiRoutes.foundAJobStep1, {
+                    method: "POST",
+                  });
+                  const { success } = await res.json();
+                  if (success) {
+                    router.push(routes.foundJobStep2);
+                  } else {
+                    Cookies.remove("job_feedback_step1");
+                    alert(
+                      "unable to process your request at this moment please try again later"
+                    );
+                    router.push(routes.home);
+                  }
                 }}
               >
                 Continue
@@ -221,7 +260,7 @@ function Field({
                 "h-11 rounded-xl border text-sm font-medium transition",
                 "focus:outline-none focus:ring-2 focus:ring-neutral-300",
                 selected
-                  ? "bg-neutral-900 text-white border-neutral-900"
+                  ? "bg-violet-500 text-white border-violet-600"
                   : "bg-neutral-100 text-neutral-700 border-neutral-200 hover:bg-neutral-200",
               ].join(" ")}
               aria-pressed={selected}

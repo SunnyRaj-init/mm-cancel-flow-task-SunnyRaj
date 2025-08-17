@@ -1,14 +1,84 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import routes from "@/app/api/routes";
 type Lawyer = "yes" | "no" | null;
 import { useMemo } from "react";
+import Cookies from "js-cookie";
+import apiRoutes from "@/app/api/apiRoutes";
 
 export default function Step3() {
   const router = useRouter();
+  useEffect(() => {
+  const cookie = Cookies.get("job_feedback_step1");
+  if (!cookie) return;
+
+  try {
+    const parsed = JSON.parse(cookie);
+
+    // Prefill the lawyer value
+    if (parsed.help_with_lawyer === "Yes") {
+      setLawyer("yes");
+    } else if (parsed.help_with_lawyer === "No") {
+      setLawyer("no");
+    }
+
+    // Prefill the visa input
+    if (parsed.visa_type) {
+      setVisa(parsed.visa_type);
+    }
+  } catch {
+    // ignore invalid JSON
+  }
+}, []);
+
+  useEffect(() => {
+    const checkAndReset = async () => {
+      const cookie = Cookies.get("job_feedback_step1");
+
+      if (!cookie) {
+        await fetch(apiRoutes.resetToStep1, {
+          method: "POST",
+        });
+        router.push(routes.home);
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(cookie);
+
+        // Required step-1 + step-2 fields
+        const requiredKeys = [
+          "foundWithMM",
+          "rolesApplied",
+          "companiesEmailed",
+          "companiesInterviewed",
+          "feedback",
+        ];
+
+        const hasAllMainFields = requiredKeys.every((k) => parsed[k]);
+
+        // If data missing → reset + redirect
+        if (!hasAllMainFields) {
+          Cookies.remove("job_feedback_step1");
+          await fetch(apiRoutes.resetToStep1, {
+            method: "POST",
+          });
+          router.push(routes.home);
+        }
+      } catch {
+        Cookies.remove("job_feedback_step1");
+        await fetch(apiRoutes.resetToStep1, {
+          method: "POST",
+        });
+        router.push(routes.home);
+      }
+    };
+
+    checkAndReset();
+  }, []); // runs only once
   const [lawyer, setLawyer] = useState<Lawyer>(null);
   const [visa, setVisa] = useState("");
 
@@ -26,7 +96,7 @@ export default function Step3() {
           {/* Back (inline SVG, no packages) */}
           <button
             type="button"
-            onClick={() => window.history.back()}
+            onClick={() => router.push(routes.foundJobStep2)}
             className="flex items-center gap-1 text-neutral-700 hover:text-neutral-900"
           >
             <svg
@@ -195,9 +265,96 @@ export default function Step3() {
         ? "bg-neutral-900 text-white hover:bg-black"
         : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
     }`}
-                onClick={() => {
+                onClick={async () => {
                   if (!canContinue) return;
-                  // router.push(routes.home) or submit action
+
+                  const cookieValue = Cookies.get("job_feedback_step1");
+                  const prev = cookieValue ? JSON.parse(cookieValue) : {};
+
+                  // optimistic update
+                  const updated = {
+                    ...prev,
+                    help_with_lawyer: lawyer === "yes" ? "Yes" : "No",
+                    visa_type: visa.trim(),
+                  };
+
+                  Cookies.set("job_feedback_step1", JSON.stringify(updated), {
+                    path: "/",
+                    expires: 1,
+                  });
+                  const hasInvalid =
+                    !updated.foundWithMM ||
+                    !updated.rolesApplied ||
+                    !updated.companiesEmailed ||
+                    !updated.companiesInterviewed ||
+                    !updated.feedback ||
+                    !updated.help_with_lawyer ||
+                    !updated.visa_type;
+                  if (hasInvalid) {
+                    // hit reset route if updated values are missing
+                    Cookies.remove("job_feedback_step1");
+                    await fetch("/api/subscription-cancellation/reset-step-1", {
+                      method: "POST",
+                    });
+                    alert(
+                      "Unable to process your request. Please try again later."
+                    );
+                    router.push(routes.home);
+                    return;
+                  }
+                  // call backend
+                  const res = await fetch(
+                    apiRoutes.foundAJobStep3,
+                    { method: "POST" }
+                  );
+
+                  const { success } = await res.json();
+
+                  if (success) {
+                    if (updated.help_with_lawyer === "Yes") {
+                      router.push(routes.noVisaHelp);
+                      return
+                    } else if (updated.help_with_lawyer === "No") {
+                      router.push(routes.visaHelp);
+                      return
+                    }
+                    // invalid data present
+                    Cookies.remove("job_feedback_step1");
+                    await fetch(apiRoutes.resetToStep1, {
+                      method: "POST",
+                    });
+                    router.push(routes.home);
+                    return;
+                  } else {
+                    // rollback on failure
+                    // check if prev values are not null
+                    const hasInvalidPrev =
+                      !prev.foundWithMM ||
+                      !prev.rolesApplied ||
+                      !prev.companiesEmailed ||
+                      !prev.companiesInterviewed ||
+                      !prev.feedback;
+                    if (hasInvalidPrev) {
+                      // hit reset route if previous values are missing
+                      Cookies.remove("job_feedback_step1");
+                      await fetch(
+                        "/api/subscription-cancellation/reset-step-1",
+                        { method: "POST" }
+                      );
+                      alert(
+                        "Unable to process your request. Please try again later."
+                      );
+                      router.push(routes.home);
+                      return;
+                    }
+                    Cookies.set("job_feedback_step1", JSON.stringify(prev), {
+                      path: "/",
+                      expires: 1,
+                    });
+
+                    alert("Unable to process your request at this moment.");
+                    router.push(routes.home);
+                  }
                 }}
               >
                 Complete cancellation

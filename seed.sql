@@ -52,6 +52,18 @@ ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cancellations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cancellation_job_feedback ENABLE ROW LEVEL SECURITY;
 
+-- Ensure one subscription per user
+ALTER TABLE subscriptions
+  ADD CONSTRAINT one_subscription_per_user UNIQUE (user_id);
+
+-- Ensure one cancellation per user
+ALTER TABLE cancellations
+  ADD CONSTRAINT one_cancellation_per_user UNIQUE (user_id);
+
+-- Ensure one feedback row per user
+ALTER TABLE cancellation_job_feedback
+  ADD CONSTRAINT one_feedback_per_user UNIQUE (user_id);
+
 -- Basic RLS policies (candidates should enhance these)
 CREATE POLICY "Users can view own data" ON users
   FOR SELECT USING (auth.uid() = id);
