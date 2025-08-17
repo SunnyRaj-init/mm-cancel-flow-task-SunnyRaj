@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import apiRoutes from "@/app/api/apiRoutes";
 import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 
 export default function SubscriptionAccepted() {
   const router = useRouter();
@@ -14,6 +15,28 @@ export default function SubscriptionAccepted() {
   const [daysLeft, setDaysLeft] = useState(Number);
   useEffect(() => {
     const init = async () => {
+      // check for cookies if not present just re route to home
+      if (!Cookies.get("user_id")) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+
+      // check for cookies if not present just re route to home
+      const sub = Cookies.get("subscription");
+      if (!sub) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+
+      // check for cookies if not present just re route to home
+      const variant = Cookies.get("downsell_variant");
+      if (!variant) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
       const res = await fetch(apiRoutes.home, { method: "GET" });
       const { subscription } = await res.json();
 

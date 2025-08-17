@@ -56,12 +56,9 @@ export default function ProfilePage() {
       // Load or assign variant
       const variant = Cookies.get("downsell_variant");
       if (!variant) {
-        const checkRes = await fetch(
-          apiRoutes.saveVariant,
-          {
-            method: "GET",
-          }
-        );
+        const checkRes = await fetch(apiRoutes.saveVariant, {
+          method: "GET",
+        });
         const { existingVariant } = await checkRes.json();
 
         // If we already have a variant in the backend → reuse it
@@ -83,7 +80,7 @@ export default function ProfilePage() {
 
           await fetch(apiRoutes.saveVariant, {
             method: "POST",
-            body: JSON.stringify({ variant:newVariant }),
+            body: JSON.stringify({ variant: newVariant }),
             headers: { "Content-Type": "application/json" },
           });
         }
@@ -94,7 +91,7 @@ export default function ProfilePage() {
         ...prev,
         status: subscription.status,
         monthlyPrice: parseInt(subscription.monthly_price) / 10,
-        currentPeriodEnd:new Date(subscription.next_due_date).toISOString()
+        currentPeriodEnd: new Date(subscription.next_due_date).toISOString(),
       }));
     };
 
@@ -448,87 +445,155 @@ export default function ProfilePage() {
                       <button
                         onClick={async () => {
                           const cookie = Cookies.get("job_feedback_step1");
-
+                          const cancellation = Cookies.get("cancellation");
+                          // both cookies exist this means a paradox has occured user  was at 2 placees left and right tree
+                          //lets remove the cookies and referesh the page
+                          if (cookie && cancellation) {
+                            Cookies.remove("job_feedback_step1");
+                            Cookies.remove("cancellation");
+                            router.refresh();
+                            return;
+                          }
                           // 1) No cookie at all → start flow from Step-1
-                          if (!cookie) {
+                          if (!cookie && !cancellation) {
                             router.push(routes.cancelSub); // `/subscription-cancellation` (step 1)
                             return;
                           }
 
-                          try {
-                            const parsed = JSON.parse(cookie);
+                          if (cookie) {
+                            try {
+                              const parsed = JSON.parse(cookie);
 
-                            // 2) Validate step-1 values
-                            const validFound = ["Yes", "No"].includes(
-                              parsed.foundWithMM
-                            );
-                            const validRoles = [
-                              "0",
-                              "1-5",
-                              "6-20",
-                              "20+",
-                            ].includes(parsed.rolesApplied);
-                            const validEmailed = [
-                              "0",
-                              "1-5",
-                              "6-20",
-                              "20+",
-                            ].includes(parsed.companiesEmailed);
-                            const validInterviewed = [
-                              "0",
-                              "1-2",
-                              "3-5",
-                              "5+",
-                            ].includes(parsed.companiesInterviewed);
+                              // 2) Validate step-1 values
+                              const validFound = ["Yes", "No"].includes(
+                                parsed.foundWithMM
+                              );
+                              const validRoles = [
+                                "0",
+                                "1-5",
+                                "6-20",
+                                "20+",
+                              ].includes(parsed.rolesApplied);
+                              const validEmailed = [
+                                "0",
+                                "1-5",
+                                "6-20",
+                                "20+",
+                              ].includes(parsed.companiesEmailed);
+                              const validInterviewed = [
+                                "0",
+                                "1-2",
+                                "3-5",
+                                "5+",
+                              ].includes(parsed.companiesInterviewed);
 
-                            if (
-                              !(
-                                validFound &&
-                                validRoles &&
-                                validEmailed &&
-                                validInterviewed
-                              )
-                            ) {
-                              // invalid values → cleanup + start at step 1
+                              if (
+                                !(
+                                  validFound &&
+                                  validRoles &&
+                                  validEmailed &&
+                                  validInterviewed
+                                )
+                              ) {
+                                // invalid values → cleanup + start at step 1
+                                Cookies.remove("job_feedback_step1");
+                                router.push(routes.cancelSub);
+                                return;
+                              }
+
+                              // 3) If feedback is missing → go to step 2
+                              if (!parsed.feedback) {
+                                router.push(routes.foundJobStep2);
+                                return;
+                              }
+
+                              // 4) Check if step-3 values exist and are valid
+                              const hasLawyer =
+                                parsed.help_with_lawyer === "Yes" ||
+                                parsed.help_with_lawyer === "No";
+                              const hasVisaType =
+                                typeof parsed.visa_type === "string" &&
+                                parsed.visa_type.trim().length > 0;
+
+                              // If either `help_with_lawyer` or `visa_type` is missing → go to step-3
+                              if (!(hasLawyer && hasVisaType)) {
+                                if (parsed.foundWithMM === "Yes") {
+                                  router.push(routes.withMMStep3);
+                                } else {
+                                  router.push(routes.withoutMMStep3);
+                                }
+                                return;
+                              }
+
+                              // 5) All fields are valid/completed → go to final page
+                              if (parsed.help_with_lawyer === "Yes") {
+                                router.push(routes.noVisaHelp);
+                              } else {
+                                router.push(routes.visaHelp);
+                              }
+                            } catch {
+                              // invalid JSON → cleanup + restart
                               Cookies.remove("job_feedback_step1");
                               router.push(routes.cancelSub);
                               return;
                             }
+                          } else if (cancellation) {
+                            try {
+                              const parsed = JSON.parse(cancellation);
 
-                            // 3) If feedback is missing → go to step 2
-                            if (!parsed.feedback) {
-                              router.push(routes.foundJobStep2);
-                              return;
-                            }
+                              // 2) Validate step-1 values
+                              const validRoles = [
+                                "0",
+                                "1-5",
+                                "6-20",
+                                "20+",
+                              ].includes(parsed.rolesApplied);
+                              const validEmailed = [
+                                "0",
+                                "1-5",
+                                "6-20",
+                                "20+",
+                              ].includes(parsed.companiesEmailed);
+                              const validInterviewed = [
+                                "0",
+                                "1-2",
+                                "3-5",
+                                "5+",
+                              ].includes(parsed.companiesInterviewed);
 
-                            // 4) Check if step-3 values exist and are valid
-                            const hasLawyer =
-                              parsed.help_with_lawyer === "Yes" ||
-                              parsed.help_with_lawyer === "No";
-                            const hasVisaType =
-                              typeof parsed.visa_type === "string" &&
-                              parsed.visa_type.trim().length > 0;
-
-                            // If either `help_with_lawyer` or `visa_type` is missing → go to step-3
-                            if (!(hasLawyer && hasVisaType)) {
-                              if (parsed.foundWithMM === "Yes") {
-                                router.push(routes.withMMStep3);
-                              } else {
-                                router.push(routes.withoutMMStep3);
+                              if (
+                                !(
+                                  validRoles &&
+                                  validEmailed &&
+                                  validInterviewed
+                                )
+                              ) {
+                                // invalid values → cleanup + start at step 1
+                                Cookies.remove("cancellation");
+                                router.push(routes.cancelSub);
+                                return;
                               }
+
+                              // 3) If reason and description is missing → go to main Reason
+                              if (
+                                !parsed.reason ||
+                                !parsed.reason_description
+                              ) {
+                                router.push(routes.mainReason);
+                                return;
+                              }
+                              //for some reason the cancellationis still pending go to main reason
+                              router.push(routes.mainReason);
+                              return;
+                            } catch {
+                              // invalid JSON → cleanup + restart
+                              Cookies.remove("cancellation");
+                              router.push(routes.cancelSub);
                               return;
                             }
-
-                            // 5) All fields are valid/completed → go to final page
-                            if (parsed.help_with_lawyer === "Yes") {
-                              router.push(routes.noVisaHelp);
-                            } else {
-                              router.push(routes.visaHelp);
-                            }
-                          } catch {
-                            // invalid JSON → cleanup + restart
-                            Cookies.remove("job_feedback_step1");
+                          } else {
                             router.push(routes.cancelSub);
+                            return;
                           }
                         }}
                         className="inline-flex items-center justify-center w-full px-4 py-3 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-all duration-200 shadow-sm group"

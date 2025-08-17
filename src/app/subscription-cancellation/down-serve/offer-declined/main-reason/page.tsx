@@ -82,6 +82,35 @@ export default function MainReason() {
       if (["A", "B"].includes(variant)) {
         setV(variant);
       }
+      // ---- Prefill fields from the "cancellation" cookie (if present)
+    const raw = Cookies.get("cancellation");
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+
+        // reason
+        if (
+          parsed.reason === "too-expensive" ||
+          parsed.reason === "platform-not-helpful" ||
+          parsed.reason === "not-enough-relevant-jobs" ||
+          parsed.reason === "decided-not-to-move" ||
+          parsed.reason === "other"
+        ) {
+          setReason(parsed.reason);
+        }
+
+        // reason_description, mapped to either price or textarea based on reason
+        if (parsed.reason_description) {
+          if (parsed.reason === "too-expensive") {
+            setPrice(String(parsed.reason_description));
+          } else {
+            setDesc(String(parsed.reason_description));
+          }
+        }
+      } catch {
+        // ignore invalid cookie
+      }
+    }
     };
 
     init();
@@ -114,12 +143,52 @@ export default function MainReason() {
 
   const canContinue = Boolean(reason) && priceValid && textareaValid;
 
-  const onContinue = () => {
+  const onContinue = async () => {
     if (!canContinue) {
       setShowError(true);
       return;
     }
-    router.push(routes.cancelCompleted);
+
+    // description field = price (for too-expensive) or textarea (for others)
+    const descriptionValue = reason === "too-expensive" ? price : desc.trim();
+
+    // merge new fields into the "cancellation" cookie
+    const raw = Cookies.get("cancellation");
+    if(!raw){
+      alert("unable to handle your request now")
+      router.push(routes.home)
+      return
+    }
+    const prev = raw ? JSON.parse(raw) : {};
+    const updated = {
+      ...prev,
+      reason,
+      reason_description: descriptionValue,
+    };
+    Cookies.set("cancellation", JSON.stringify(updated), {
+      path: "/",
+      expires: 1,
+    });
+
+    // hit the backend route
+    const res = await fetch("/api/offer-declined/main-reason", {
+      method: "POST",
+      body: JSON.stringify({
+        reason,
+        description: descriptionValue,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const { success } = await res.json();
+    if (success) {
+      router.push(routes.cancelCompleted);
+    } else {
+      alert("Something went wrong. Please try again later.");
+      router.push(routes.home);
+    }
   };
 
   const resetFollowups = () => {
@@ -135,7 +204,7 @@ export default function MainReason() {
         <div className="relative flex items-center justify-center py-3 md:py-4 border-b border-neutral-200/70 rounded-t-3xl">
           <button
             type="button"
-            onClick={() => window.history.back()}
+            onClick={() => router.push(routes.offerDeclined)}
             className="absolute left-3 top-3 md:left-4 md:top-4 flex items-center gap-1 text-neutral-700 hover:text-neutral-900"
           >
             <svg

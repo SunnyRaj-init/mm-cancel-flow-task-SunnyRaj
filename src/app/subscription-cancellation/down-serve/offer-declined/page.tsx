@@ -40,6 +40,18 @@ export default function OfferDeclined() {
       if (["A", "B"].includes(variant)) {
         setV(variant);
       }
+      const cancellationCookie = Cookies.get("cancellation");
+      if (cancellationCookie) {
+        try {
+          const parsed = JSON.parse(cancellationCookie);
+          if (parsed.rolesApplied) setQ1(parsed.rolesApplied as Choice);
+          if (parsed.companiesEmailed) setQ2(parsed.companiesEmailed as Choice);
+          if (parsed.companiesInterviewed)
+            setQ3(parsed.companiesInterviewed as Choice);
+        } catch {
+          // ignore
+        }
+      }
     };
 
     init();
@@ -51,12 +63,40 @@ export default function OfferDeclined() {
 
   const allChosen = Boolean(q1 && q2 && q3);
 
-  const onContinue = () => {
+  const onContinue = async () => {
     if (!allChosen) {
       setShowError(true);
       return;
     }
-    router.push(routes.mainReason);
+
+    // payload
+    const payload = {
+      rolesApplied: q1,
+      companiesEmailed: q2,
+      companiesInterviewed: q3,
+    };
+
+    // store in cookie
+    Cookies.set("cancellation", JSON.stringify(payload), {
+      path: "/",
+      expires: 1,
+    });
+
+    // call backend
+    const res = await fetch(apiRoutes.offerDeclined, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const { success } = await res.json();
+
+    if (success) {
+      router.push(routes.mainReason);
+    } else {
+      alert("Something went wrong. Please try again.");
+      router.push(routes.home);
+    }
   };
 
   return (
@@ -68,7 +108,17 @@ export default function OfferDeclined() {
           {/* Back */}
           <button
             type="button"
-            onClick={() => window.history.back()}
+            onClick={() => {
+              if (v === "B") {
+                router.push(routes.downServe)
+                return
+              }
+              if (v === "A") {
+                router.push(routes.cancelSub)
+                return
+              }
+              router.push(routes.home)
+            }}
             className="absolute left-3 top-3 md:left-4 md:top-4 flex items-center gap-1 text-neutral-700 hover:text-neutral-900"
           >
             <svg

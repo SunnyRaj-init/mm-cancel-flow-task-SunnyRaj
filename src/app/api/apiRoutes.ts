@@ -8,6 +8,8 @@ const apiRoutes = {
   saveVariant:'/api/subscription-cancellation/save-variant',
   OfferAccepted:'/api/subscription-cancellation/down-serve/offer-accepted',
   keepSubscription:'/api/keep-subscription',
+  offerDeclined:'/api/offer-declined',
+  mainReason:'/api/offer-declined/main-reason'
 };
 
 export default apiRoutes;

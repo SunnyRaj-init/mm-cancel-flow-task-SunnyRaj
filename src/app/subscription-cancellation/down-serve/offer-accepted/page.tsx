@@ -3,10 +3,39 @@
 import routes from "@/app/api/routes";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { useEffect } from "react";
 
 export default function OfferAccepted() {
   const router = useRouter();
+  useEffect(() => {
+    const init = async () => {
+      // check for cookies if not present just re route to home
+      if (!Cookies.get("user_id")) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
 
+      // check for cookies if not present just re route to home
+      const sub = Cookies.get("subscription");
+      if (!sub) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+
+      // check for cookies if not present just re route to home
+      const variant = Cookies.get("downsell_variant");
+      if (!variant) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+    };
+
+    init();
+  }, []);
   return (
     <main className="bg-black/40 md:flex md:items-center md:justify-center">
       {/* Card */}

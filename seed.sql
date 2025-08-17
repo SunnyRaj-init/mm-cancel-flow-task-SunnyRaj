@@ -68,6 +68,10 @@ ALTER TABLE cancellations
 ALTER TABLE cancellation_job_feedback
   ADD CONSTRAINT one_feedback_per_user UNIQUE (user_id);
 
+-- Enabling descrption of the main reason to be stored 
+ALTER TABLE cancellations
+  ADD COLUMN reason_description TEXT;
+
 -- Basic RLS policies (candidates should enhance these)
 CREATE POLICY "Users can view own data" ON users
   FOR SELECT USING (auth.uid() = id);

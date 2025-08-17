@@ -5,10 +5,11 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
+import apiRoutes from "@/app/api/apiRoutes";
 
 export default function CancelCompleted() {
   const router = useRouter();
-
+  const [dueDate, setDueDate] = useState(String);
   const [v, setV] = useState("");
   useEffect(() => {
     const init = async () => {
@@ -36,6 +37,13 @@ export default function CancelCompleted() {
       }
       if (["A", "B"].includes(variant)) {
         setV(variant);
+      }
+      const res = await fetch(apiRoutes.home, { method: "GET" });
+      const { subscription } = await res.json();
+
+      if (subscription.next_due_date) {
+        const iso = new Date(subscription.next_due_date).toISOString();
+        setDueDate(iso);
       }
     };
 
@@ -124,8 +132,13 @@ export default function CancelCompleted() {
             </p>
 
             <p className="mt-4 text-sm md:text-base text-neutral-700">
-              Your subscription is set to end on XX date. You’ll still have full
-              access until then. No further charges after that.
+              Your subscription is set to end on{" "}
+              {new Date(dueDate).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+              })}
+              . You’ll still have full access until then. No further charges
+              after that.
             </p>
 
             <p className="mt-3 text-xs md:text-sm text-neutral-500">
