@@ -3,14 +3,46 @@
 import routes from "@/app/api/routes";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
+import Cookies from "js-cookie";
 
 type Choice = "0" | "1-5" | "6-20" | "20+" | "1-2" | "3-5" | "5+" | null;
 
 export default function OfferDeclined() {
   const router = useRouter();
+  const [v, setV] = useState("");
+  useEffect(() => {
+    const init = async () => {
+      // check for cookies if not present just re route to home
+      if (!Cookies.get("user_id")) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
 
+      // check for cookies if not present just re route to home
+      const sub = Cookies.get("subscription");
+      if (!sub) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+
+      // check for cookies if not present just re route to home
+      const variant = Cookies.get("downsell_variant");
+      if (!variant) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+      if (["A", "B"].includes(variant)) {
+        setV(variant);
+      }
+    };
+
+    init();
+  }, []);
   const [q1, setQ1] = useState<Choice>(null); // roles applied through MM
   const [q2, setQ2] = useState<Choice>(null); // companies emailed directly
   const [q3, setQ3] = useState<Choice>(null); // companies interviewed with
@@ -58,14 +90,29 @@ export default function OfferDeclined() {
             <h2 className="text-sm md:text-base font-medium text-neutral-800">
               Subscription Cancellation
             </h2>
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
-              <span className="h-1.5 w-10 rounded-full bg-neutral-700/70" />
-              <span className="h-1.5 w-10 rounded-full bg-neutral-300" />
-            </div>
-            <span className="text-xs text-neutral-500 hidden sm:inline">
-              Step 2 of 3
-            </span>
+            {v === "B" && (
+              <>
+                <div className="hidden sm:flex items-center gap-2">
+                  <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
+                  <span className="h-1.5 w-10 rounded-full bg-neutral-700/70" />
+                  <span className="h-1.5 w-10 rounded-full bg-neutral-300" />
+                </div>
+                <span className="text-xs text-neutral-500 hidden sm:inline">
+                  Step 2 of 3
+                </span>
+              </>
+            )}
+            {v === "A" && (
+              <>
+                <div className="hidden sm:flex items-center gap-2">
+                  <span className="h-1.5 w-10 rounded-full bg-neutral-700/70" />
+                  <span className="h-1.5 w-10 rounded-full bg-neutral-300" />
+                </div>
+                <span className="text-xs text-neutral-500 hidden sm:inline">
+                  Step 1 of 2
+                </span>
+              </>
+            )}
           </div>
 
           {/* Close */}
@@ -169,14 +216,24 @@ export default function OfferDeclined() {
               }}
             >
               {/* Offer bar */}
-              <button
-                type="button"
-                className="w-full inline-flex items-center justify-center h-12 rounded-xl
+              {v === "B" && (
+                <button
+                  type="button"
+                  className="w-full inline-flex items-center justify-center h-12 rounded-xl
                            bg-green-500 hover:bg-green-600 text-white font-medium"
-              >
-                Get 50% off | $12.50{" "}
-                <span className="ml-1 text-white/80 line-through">$25</span>
-              </button>
+                >
+                  Get 10$ off
+                </button>
+              )}
+              {v === "A" && (
+                <button
+                  type="button"
+                  className="w-full inline-flex items-center justify-center h-12 rounded-xl
+                           bg-black hover:bg-neural-600 text-white font-medium"
+                >
+                  Keep Subscription
+                </button>
+              )}
 
               {/* Continue */}
               <button

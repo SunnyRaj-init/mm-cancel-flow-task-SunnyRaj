@@ -4,8 +4,42 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import routes from "@/app/api/routes";
+import Cookies from "js-cookie";
+import { useEffect, useState } from "react";
+
 export default function Page() {
   const router = useRouter();
+  const [v, setV] = useState("");
+  useEffect(() => {
+    const init = async () => {
+      // check for cookies if not present just re route to home
+      if (!Cookies.get("user_id")) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+
+      // check for cookies if not present just re route to home
+      if (!Cookies.get("subscription")) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+
+      // check for cookies if not present just re route to home
+      const variant = Cookies.get("downsell_variant");
+      if (!variant) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+      if (["A", "B"].includes(variant)) {
+        setV(variant);
+      }
+    };
+
+    init();
+  }, []);
   return (
     <div className="min-h-dvh w-full bg-black/40 flex items-center justify-center p-3 md:p-6">
       {/* Modal */}
@@ -77,7 +111,17 @@ export default function Page() {
                 <button
                   type="button"
                   className="w-full h-12 md:h-[52px] rounded-xl border border-gray-200 bg-white text-gray-800 text-[15px] font-medium hover:bg-gray-50 transition-colors"
-                onClick={() => router.push(routes.downServe)}
+                  onClick={() => {
+                    if (v === "A") {
+                      router.push(routes.offerDeclined)
+                      return
+                    }
+                    if(v==="B"){
+                      router.push(routes.downServe)
+                      return
+                    }
+                    router.push(routes.home)
+                  }}
                 >
                   Not yet – I’m still looking
                 </button>

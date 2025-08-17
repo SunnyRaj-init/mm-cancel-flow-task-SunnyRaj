@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS cancellations (
   downsell_variant TEXT NOT NULL CHECK (downsell_variant IN ('A', 'B')),
   reason TEXT,
   accepted_downsell BOOLEAN DEFAULT FALSE,
+  roles_applied TEXT CHECK(roles_applied IN ('0','1-5','6-20','20+')),
+  companies_emailed TEXT CHECK(companies_emailed IN ('0','1-5','6-20','20+')),
+  companies_interviewed TEXT CHECK(companies_interviewed IN ('0','1-2','3-5','5+')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -91,6 +94,12 @@ CREATE POLICY "Service role can insert feedback"
   FOR INSERT TO service_role
   WITH CHECK (true);
 
+-- Allow server-side inserts using the service role key
+CREATE POLICY "Service role can insert cancellations"
+  ON cancellations
+  FOR INSERT TO service_role
+  WITH CHECK (true);
+ 
 -- Seed data
 INSERT INTO users (id, email) VALUES
   ('550e8400-e29b-41d4-a716-446655440001', 'user1@example.com'),

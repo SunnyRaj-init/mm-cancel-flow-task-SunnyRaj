@@ -3,10 +3,44 @@
 import routes from "@/app/api/routes";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { useEffect,useState } from "react";
 
 export default function CancelCompleted() {
   const router = useRouter();
 
+  const [v, setV] = useState("");
+  useEffect(() => {
+    const init = async () => {
+      // check for cookies if not present just re route to home
+      if (!Cookies.get("user_id")) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+
+      // check for cookies if not present just re route to home
+      const sub = Cookies.get("subscription");
+      if (!sub) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+
+      // check for cookies if not present just re route to home
+      const variant = Cookies.get("downsell_variant");
+      if (!variant) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+      if (["A", "B"].includes(variant)) {
+        setV(variant);
+      }
+    };
+
+    init();
+  }, []);
   return (
     <main className="min-h-screen bg-black/40 md:py-10">
       {/* Card */}
@@ -34,12 +68,29 @@ export default function CancelCompleted() {
             <h2 className="text-sm md:text-base font-medium text-neutral-800">
               Subscription Cancelled
             </h2>
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
-              <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
-              <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
-            </div>
-            <span className="text-xs text-neutral-500 hidden sm:inline">Completed</span>
+            {v === "B" && (
+              <>
+                <div className="hidden sm:flex items-center gap-2">
+                  <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
+                  <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
+                  <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
+                </div>
+                <span className="text-xs text-neutral-500 hidden sm:inline">
+                  Completed
+                </span>
+              </>
+            )}
+            {v === "A" && (
+              <>
+                <div className="hidden sm:flex items-center gap-2">
+                  <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
+                  <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
+                </div>
+                <span className="text-xs text-neutral-500 hidden sm:inline">
+                  Completed
+                </span>
+              </>
+            )}
           </div>
 
           {/* Close */}

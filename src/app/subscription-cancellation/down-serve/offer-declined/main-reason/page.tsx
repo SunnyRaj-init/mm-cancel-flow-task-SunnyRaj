@@ -1,10 +1,11 @@
 // app/main-reason/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import routes from "@/app/api/routes";
+import Cookies from "js-cookie";
 
 type Reason =
   | "too-expensive"
@@ -52,6 +53,38 @@ export default function MainReason() {
 
   const [reason, setReason] = useState<Reason>(null);
 
+  const [v, setV] = useState("");
+  useEffect(() => {
+    const init = async () => {
+      // check for cookies if not present just re route to home
+      if (!Cookies.get("user_id")) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+
+      // check for cookies if not present just re route to home
+      const sub = Cookies.get("subscription");
+      if (!sub) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+
+      // check for cookies if not present just re route to home
+      const variant = Cookies.get("downsell_variant");
+      if (!variant) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+      if (["A", "B"].includes(variant)) {
+        setV(variant);
+      }
+    };
+
+    init();
+  }, []);
   // follow-ups
   const [price, setPrice] = useState(""); // too-expensive
   const [desc, setDesc] = useState(""); // textarea reasons
@@ -123,14 +156,29 @@ export default function MainReason() {
             <h2 className="text-sm md:text-base font-medium text-neutral-800">
               Subscription Cancellation
             </h2>
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
-              <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
-              <span className="h-1.5 w-10 rounded-full bg-neutral-700/70" />
-            </div>
-            <span className="text-xs text-neutral-500 hidden sm:inline">
-              Step 3 of 3
-            </span>
+            {v === "B" && (
+              <>
+                <div className="hidden sm:flex items-center gap-2">
+                  <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
+                  <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
+                  <span className="h-1.5 w-10 rounded-full bg-neutral-700/70" />
+                </div>
+                <span className="text-xs text-neutral-500 hidden sm:inline">
+                  Step 3 of 3
+                </span>
+              </>
+            )}
+            {v === "A" && (
+              <>
+                <div className="hidden sm:flex items-center gap-2">
+                  <span className="h-1.5 w-10 rounded-full bg-green-500/80" />
+                  <span className="h-1.5 w-10 rounded-full bg-neutral-700/70" />
+                </div>
+                <span className="text-xs text-neutral-500 hidden sm:inline">
+                  Step 2 of 2
+                </span>
+              </>
+            )}
           </div>
 
           <button
@@ -328,14 +376,24 @@ export default function MainReason() {
                 paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))",
               }}
             >
-              <button
-                type="button"
-                className="w-full inline-flex items-center justify-center h-12 rounded-xl
+              {v === "B" && (
+                <button
+                  type="button"
+                  className="w-full inline-flex items-center justify-center h-12 rounded-xl
                            bg-green-500 hover:bg-green-600 text-white font-medium"
-              >
-                Get 50% off | $12.50{" "}
-                <span className="ml-1 text-white/80 line-through">$25</span>
-              </button>
+                >
+                  Get 10$ off
+                </button>
+              )}
+              {v === "A" && (
+                <button
+                  type="button"
+                  className="w-full inline-flex items-center justify-center h-12 rounded-xl
+                           bg-black hover:bg-neural-600 text-white font-medium"
+                >
+                  Keep Subscription
+                </button>
+              )}
 
               <button
                 type="button"

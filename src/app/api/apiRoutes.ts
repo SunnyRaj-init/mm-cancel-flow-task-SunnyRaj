@@ -5,6 +5,7 @@ const apiRoutes = {
   foundAJobStep3: "/api/subscription-cancellation/found-a-job-step-3",
   resetToStep1: "/api/subscription-cancellation/reset-to-step-1",
   cancelComplete:'/api/subscription-cancellation/complete',
+  saveVariant:'/api/subscription-cancellation/save-variant',
 };
 
 export default apiRoutes;

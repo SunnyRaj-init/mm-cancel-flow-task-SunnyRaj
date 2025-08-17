@@ -3,10 +3,50 @@
 import routes from "@/app/api/routes";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { useEffect, useState } from "react";
 
 export default function DownserveOffer() {
   const router = useRouter();
+  const [price, setPrice] = useState(25);
+  useEffect(() => {
+    const init = async () => {
+      // check for cookies if not present just re route to home
+      if (!Cookies.get("user_id")) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
 
+      // check for cookies if not present just re route to home
+      const sub=Cookies.get("subscription")
+      if (!sub) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+
+      // check for cookies if not present just re route to home
+      const variant = Cookies.get("downsell_variant");
+      if (!variant) {
+        alert("Oops something has changed");
+        router.push(routes.home);
+        return;
+      }
+
+      // redirect the user if its not variant B
+      if (variant !== "B") {
+        router.push(routes.offerDeclined);
+        return;
+      }
+      const subData=JSON.parse(sub)
+      if(subData.monthly_price){
+        setPrice(parseInt(subData.monthly_price)/100)
+      }
+    };
+
+    init();
+  }, []);
   return (
     <main className="min-h-screen bg-black/40 md:flex md:items-center md:justify-center">
       {/* Card */}
@@ -46,7 +86,6 @@ export default function DownserveOffer() {
               <span className="h-1.5 w-10 rounded-full bg-neutral-300" />
               <span className="h-1.5 w-10 rounded-full bg-neutral-300" />
             </div>
-
             <span className="text-xs text-neutral-500 hidden sm:inline">
               Step 1 of 3
             </span>
@@ -92,16 +131,16 @@ export default function DownserveOffer() {
             {/* Purple offer card */}
             <div className="mt-5 md:mt-6 rounded-2xl border border-violet-300/70 bg-violet-100/60 p-4 md:p-5">
               <p className="text-xl md:text-2xl font-semibold text-neutral-900">
-                Here’s <u>50% off</u> until you find a job.
+                Here’s <u>10$ off</u> until you find a job.
               </p>
 
               <div className="flex items-baseline gap-4 mt-3">
                 <span className="text-violet-600 font-semibold text-xl">
-                  $12.50
+                  ${price-10}
                 </span>
                 <span className="text-violet-600">/month</span>
                 <span className="text-neutral-400 line-through ml-2">
-                  $25/month
+                  ${price}/month
                 </span>
               </div>
 
@@ -109,9 +148,11 @@ export default function DownserveOffer() {
                 type="button"
                 className="mt-4 w-full inline-flex items-center justify-center rounded-lg px-5 py-3 text-base font-medium
                            bg-green-500 hover:bg-green-600 text-white transition-colors"
-                           onClick={()=>{router.push(routes.offerAcceptedAlt)}}
+                onClick={() => {
+                  router.push(routes.offerAcceptedAlt);
+                }}
               >
-                Get 50% off
+                Get 10$ off
               </button>
 
               <p className="mt-3 text-xs text-neutral-500 italic text-center md:text-left">
@@ -132,7 +173,9 @@ export default function DownserveOffer() {
                 type="button"
                 className="w-full inline-flex items-center justify-center rounded-lg px-5 py-3 text-base font-medium
                            bg-white-100 text-neutral-700 border border-neutral-300"
-                           onClick={()=>{router.push(routes.offerDeclined)}}
+                onClick={() => {
+                  router.push(routes.offerDeclined);
+                }}
               >
                 No thanks
               </button>

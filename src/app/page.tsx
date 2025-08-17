@@ -36,14 +36,60 @@ export default function ProfilePage() {
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   useEffect(() => {
     const init = async () => {
-      // Set plain cookie
-      Cookies.set("user_id", mockUser.id, { path: "/", expires: 1 });
+      // Set user_id cookie only if missing
+      if (!Cookies.get("user_id")) {
+        Cookies.set("user_id", mockUser.id, { path: "/", expires: 1 });
+      }
 
       // Fetch subscription
       const res = await fetch(apiRoutes.home, { method: "GET" });
       const { subscription } = await res.json();
 
-      // Update local state (so the UI reflects real subscription status)
+      // Set subscription cookie only if missing
+      if (!Cookies.get("subscription")) {
+        Cookies.set("subscription", JSON.stringify(subscription), {
+          path: "/",
+          expires: 1,
+        });
+      }
+
+      // Load or assign variant
+      const variant = Cookies.get("downsell_variant");
+      if (!variant) {
+        const checkRes = await fetch(
+          apiRoutes.saveVariant,
+          {
+            method: "GET",
+          }
+        );
+        const { existingVariant } = await checkRes.json();
+
+        // If we already have a variant in the backend → reuse it
+        if (existingVariant !== null) {
+          Cookies.set("downsell_variant", existingVariant, {
+            path: "/",
+            expires: 365,
+          });
+        } else {
+          // Otherwise generate a new one using secure RNG
+          const randomByte = new Uint8Array(1);
+          crypto.getRandomValues(randomByte);
+          const newVariant = randomByte[0] < 128 ? "A" : "B";
+
+          Cookies.set("downsell_variant", newVariant, {
+            path: "/",
+            expires: 365,
+          });
+
+          await fetch(apiRoutes.saveVariant, {
+            method: "POST",
+            body: JSON.stringify({ variant:newVariant }),
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      // Update subscription state
       setSubscriptionData((prev) => ({
         ...prev,
         status: subscription.status,
